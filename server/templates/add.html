@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Camera App</h1>
+    <div>
+        <label for="folderName">Folder Name:</label>
+        <input type="text" id="folderName">
+        <button id="createFolder">Create New Folder</button>
+    </div>
+    <video id="video" autoplay></video>
+    <button id="snap">Snap Photo</button>
+    <button id="stop">Stop Camera</button>
+    <button id="toggle">On/Off Camera</button>
+    <button id="download">Download Photo</button>
+    <span id="photoCount">0</span> photos downloaded
+    <canvas id="canvas" style="display: none;" width="300" height="300"></canvas>
+
+    <script>
+        let stream;
+        let isCameraOn = true;
+        let folderName = "";
+        let photoCounter = 0;
+
+        // Function to start the camera
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(s) {
+                    var video = document.getElementById('video');
+                    stream = s;
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("An error occurred: " + err);
+                });
+        }
+
+        // Function to stop the camera
+        function stopCamera() {
+            if (stream) {
+                let tracks = stream.getTracks();
+                tracks.forEach(function(track) {
+                    track.stop();
+                });
+            }
+        }
+
+        // Function to toggle the camera on/off
+        document.getElementById('toggle').addEventListener('click', function() {
+            if (isCameraOn) {
+                stopCamera();
+                isCameraOn = false;
+            } else {
+                startCamera();
+                isCameraOn = true;
+            }
+        });
+
+        // Function to take a picture
+        document.getElementById('snap').addEventListener('click', function() {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            canvas.style.display = "block";
+            context.drawImage(video, 0, 0, 300, 300);
+        });
+
+        // Function to stop the camera
+        document.getElementById('stop').addEventListener('click', function() {
+            stopCamera();
+            isCameraOn = false;
+        });
+
+        // Function to download the photo
+        document.getElementById('download').addEventListener('click', function() {
+            if (!folderName) {
+                alert("Please specify the folder name first.");
+                return;
+            }
+            var canvas = document.getElementById('canvas');
+            var dataURL = canvas.toDataURL('image/png');
+            var link = document.createElement('a');
+            link.download = `${folderName}/photo_${new Date().getTime()}.png`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            photoCounter++;
+            document.getElementById('photoCount').textContent = photoCounter;
+        });
+
+        // Function to create a new folder
+        document.getElementById('createFolder').addEventListener('click', function() {
+            folderName = document.getElementById('folderName').value.trim();
+            if (!folderName) {
+                alert("Please enter a folder name.");
+                return;
+            }
+            alert(`Folder "${folderName}" created successfully.`);
+        });
+
+        // Start the camera initially
+        startCamera();
+    </script>
+</body>
+</html>
